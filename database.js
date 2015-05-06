@@ -178,9 +178,7 @@ function simpleExecute(sql, bindParams, options) {
                         });
                     })
                     .catch(function(err) {
-                        if (err) {
-                            return reject(err);
-                        }
+                        reject(err);
 
                         process.nextTick(function() {
                             releaseConnection(connection);
