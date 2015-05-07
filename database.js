@@ -166,6 +166,8 @@ function releaseConnection(connection) {
 module.exports.releaseConnection = releaseConnection;
 
 function simpleExecute(sql, bindParams, options) {
+    options.isAutoCommit = true;
+    
     return new Promise(function(resolve, reject) {
         getConnection()
             .then(function(connection){
