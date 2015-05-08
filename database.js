@@ -30,7 +30,19 @@ var pool;
 var buildupScripts = [];
 var teardownScripts = [];
 
+//Query result outFormat option constants
+module.exports.ARRAY = oracledb.ARRAY;
 module.exports.OBJECT = oracledb.OBJECT;
+
+//Constants for bind parameter type properties
+module.exports.STRING = oracledb.STRING;
+module.exports.NUMBER = oracledb.NUMBER;
+module.exports.DATE = oracledb.DATE;
+
+//Constants for bind parameter dir properties
+module.exports.BIND_IN = oracledb.BIND_IN;
+module.exports.BIND_OUT = oracledb.BIND_OUT;
+module.exports.BIND_INOUT = oracledb.BIND_INOUT;
 
 function createPool(config) {
     return new Promise(function(resolve, reject) {
@@ -166,8 +178,7 @@ function releaseConnection(connection) {
 module.exports.releaseConnection = releaseConnection;
 
 function simpleExecute(sql, bindParams, options) {
-    options.isAutoCommit = true;
-    
+
     return new Promise(function(resolve, reject) {
         getConnection()
             .then(function(connection){
