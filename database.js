@@ -125,7 +125,7 @@ function getConnection() {
                         callback(err);
                     });
                 },
-                function (err) {
+                function(err) {
                     if (err) {
                         return reject(err);
                     }
@@ -161,7 +161,7 @@ function releaseConnection(connection) {
                 callback(err);
             });
         },
-        function (err) {
+        function(err) {
             if (err) {
                 console.error(err); //don't return as we still need to release the connection
             }
@@ -179,9 +179,13 @@ module.exports.releaseConnection = releaseConnection;
 
 function simpleExecute(sql, bindParams, options) {
 
+    if (options.isAutoCommit === undefined) {
+        options.isAutoCommit = true;
+    }
+
     return new Promise(function(resolve, reject) {
         getConnection()
-            .then(function(connection){
+            .then(function(connection) {
                 execute(sql, bindParams, options, connection)
                     .then(function(results) {
                         resolve(results);
