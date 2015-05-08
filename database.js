@@ -178,8 +178,11 @@ function releaseConnection(connection) {
 module.exports.releaseConnection = releaseConnection;
 
 function simpleExecute(sql, bindParams, options) {
+    if (options.autoCommit === undefined) {//isAutoCommit was renamed to autoCommit in node-oracledb v0.5.0
+        options.autoCommit = true;
+    }
 
-    if (options.isAutoCommit === undefined) {
+    if (options.isAutoCommit === undefined) {//isAutoCommit was left for backward compatibility, should probably remove in future
         options.isAutoCommit = true;
     }
 
