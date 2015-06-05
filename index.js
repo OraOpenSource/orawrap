@@ -29,6 +29,7 @@ var async = require('async');
 var pool;
 var buildupScripts = [];
 var teardownScripts = [];
+var connectInfo;
 
 //Query result outFormat option constants
 module.exports.ARRAY = oracledb.ARRAY;
@@ -43,6 +44,17 @@ module.exports.DATE = oracledb.DATE;
 module.exports.BIND_IN = oracledb.BIND_IN;
 module.exports.BIND_OUT = oracledb.BIND_OUT;
 module.exports.BIND_INOUT = oracledb.BIND_INOUT;
+
+function setConnectInfo(ci) {
+    connectInfo = {
+        user: ci.user,
+        password: ci.password,
+        connectString: ci.connectString,
+        externalAuth: ci.externalAuth
+    };
+}
+
+module.exports.setConnectInfo = setConnectInfo;
 
 function createPool(config, cb) {
     return new Promise(function(resolve, reject) {
@@ -137,7 +149,7 @@ module.exports.addTeardownSql = addTeardownSql;
 
 function getConnection(cb) {
     return new Promise(function(resolve, reject) {
-        pool.getConnection(function(err, connection) {
+        var getConnCb = function(err, connection) {
             if (err) {
                 reject(err);
 
@@ -173,7 +185,13 @@ function getConnection(cb) {
                     }
                 }
             );
-        });
+        };
+
+        if (pool) {
+            pool.getConnection(getConnCb);
+        } else {
+            oracledb.getConnection(connectInfo, getConnCb);
+        }
     });
 }
 
