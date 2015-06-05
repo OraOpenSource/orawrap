@@ -44,18 +44,28 @@ module.exports.BIND_IN = oracledb.BIND_IN;
 module.exports.BIND_OUT = oracledb.BIND_OUT;
 module.exports.BIND_INOUT = oracledb.BIND_INOUT;
 
-function createPool(config) {
+function createPool(config, cb) {
     return new Promise(function(resolve, reject) {
         oracledb.createPool(
             config,
             function(err, p) {
                 if (err) {
-                    return reject(err);
+                    reject(err);
+
+                    if (cb) {
+                        cb(err);
+                    }
+
+                    return;
                 }
 
                 pool = p;
 
                 resolve(pool);
+                
+                if (cb) {
+                    cb(null, pool);
+                }
             }
         );
     });
@@ -63,18 +73,32 @@ function createPool(config) {
 
 module.exports.createPool = createPool;
 
-function terminatePool() {
+function terminatePool(cb) {
     return new Promise(function(resolve, reject) {
         if (pool) {
             pool.terminate(function(err) {
                 if (err) {
-                    return reject(err);
+                    reject(err);
+
+                    if (cb) {
+                        cb(err);
+                    }
+
+                    return;
                 }
 
                 resolve();
+
+                if (cb) {
+                    cb(null);
+                }
             });
         } else {
             resolve();
+
+            if (cb) {
+                cb(null);
+            }
         }
     });
 }
@@ -111,11 +135,17 @@ function addTeardownSql(statement) {
 
 module.exports.addTeardownSql = addTeardownSql;
 
-function getConnection() {
+function getConnection(cb) {
     return new Promise(function(resolve, reject) {
         pool.getConnection(function(err, connection) {
             if (err) {
-                return reject(err);
+                reject(err);
+
+                if (cb) {
+                    cb(err);
+                }
+
+                return;
             }
 
             async.eachSeries(
@@ -127,10 +157,20 @@ function getConnection() {
                 },
                 function(err) {
                     if (err) {
-                        return reject(err);
+                        reject(err);
+
+                        if (cb) {
+                            cb(err);
+                        }
+
+                        return;
                     }
 
                     resolve(connection);
+
+                    if (cb) {
+                        cb(null, connection);
+                    }
                 }
             );
         });
@@ -139,14 +179,24 @@ function getConnection() {
 
 module.exports.getConnection = getConnection;
 
-function execute(sql, bindParams, options, connection) {
+function execute(sql, bindParams, options, connection, cb) {
     return new Promise(function(resolve, reject) {
         connection.execute(sql, bindParams, options, function(err, results) {
             if (err) {
-                return reject(err);
+                reject(err);
+
+                if (cb) {
+                    cb(err);
+                }
+
+                return;
             }
 
             resolve(results);
+
+            if (cb) {
+                cb(null, results);
+            }
         });
     });
 }
@@ -177,7 +227,7 @@ function releaseConnection(connection) {
 
 module.exports.releaseConnection = releaseConnection;
 
-function simpleExecute(sql, bindParams, options) {
+function simpleExecute(sql, bindParams, options, cb) {
     if (options.autoCommit === undefined) {//isAutoCommit was renamed to autoCommit in node-oracledb v0.5.0
         options.autoCommit = true;
     }
@@ -193,12 +243,20 @@ function simpleExecute(sql, bindParams, options) {
                     .then(function(results) {
                         resolve(results);
 
+                        if (cb) {
+                            cb(null, results);
+                        }
+
                         process.nextTick(function() {
                             releaseConnection(connection);
                         });
                     })
                     .catch(function(err) {
                         reject(err);
+
+                        if (cb) {
+                            cb(err);
+                        }
 
                         process.nextTick(function() {
                             releaseConnection(connection);
@@ -207,6 +265,10 @@ function simpleExecute(sql, bindParams, options) {
             })
             .catch(function(err) {
                 reject(err);
+
+                if (cb) {
+                    cb(err);
+                }
             });
     });
 }
