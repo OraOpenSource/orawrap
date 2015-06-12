@@ -127,6 +127,8 @@ function terminatePool(name, callback) {
                     return;
                 }
 
+                delete poolMap[key];
+
                 resolve();
 
                 if (cb) {
