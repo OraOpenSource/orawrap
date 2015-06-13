@@ -23,5 +23,8 @@
   "dependencies": {
     "async": "^1.2.1",
     "es6-promise": "^2.3.0"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.5"
   }
 }
