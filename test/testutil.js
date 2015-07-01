@@ -14,4 +14,6 @@ module.exports.getConfigFromEnv = function() {
     config.poolMin = Number(process.env.ORAWRAP_TEST_POOL_MIN) || 2;
     config.poolIncrement = Number(process.env.ORAWRAP_TEST_POOL_INCREMENT) || 2;
     config.poolTimeout = Number(process.env.ORAWRAP_TEST_POOL_TIMEOUT) || 10;
+
+    return config;
 };
