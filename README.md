@@ -15,8 +15,11 @@ var dbConfig = {
     connectString: 'localhost/xe'
 };
 
+//Setting the connection info only needs to be done once as it's stored internally
 orawrap.setConnectInfo(dbConfig);
 
+//Orawrap's execute method will handle obtaining a connection from the connection pool 
+//and then release it after execution
 orawrap.execute(
    'SELECT employee_id, ' +
    '   first_name, ' +
