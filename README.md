@@ -6,10 +6,35 @@ Orawrap is a wrapper module for the Oracle Database driver for Node.js ([node-or
 * A connection manager that provides a simplified execute method (can open and close connections automatically)
 * Support for centralizing SQL scripts to be executed at various timings
 
-###Example 1: One off script (no pool)
+###Example 1: One off script (without a connection pool)
+```javascript
+var orawrap = require('orawrap');
+var dbConfig = {
+    user: 'hr',
+    password: 'welcome',
+    connectString: 'localhost/xe'
+};
 
+orawrap.setConnectInfo(config);
 
-###Example 2: Web server (pool)
+orawrap.execute(
+   'SELECT employee_id, ' +
+   '   first_name, ' +
+   '   last_name, ' +
+   '   phone_number, ' +
+   '   hire_date ' +
+   'FROM employees',
+   function(err, results) {
+      if (err) {
+         throw err;
+      }
+      
+      //process results
+   }
+);
+```
+
+###Example 2: Web server (with a connection pool)
 **server.js**
 ```javascript
 var express = require('express');
@@ -30,7 +55,8 @@ var dbConfig = {
 app.get('/api/employees', employeesRoutes.get);
 
 //Use orawrap to create a connection pool prior to starting the web server 
-orawrap.createPool(dbConfig, function(err, pool) {//pool is provided but rarely needed as it's stored in orawrap for use later
+orawrap.createPool(dbConfig, function(err, pool) {
+   //the created pool is provided, but it's rarely needed as it's stored in orawrap for use later
    if (err) throw err;
    
    //Start the web server now that the pool is ready to handle incoming requests
@@ -46,7 +72,8 @@ var orawrap = require('orawrap');
 
 //When orawrap is required in here, the pool is already available for use
 function get(req, res, next) {
-   //orawrap's execute will handle obtaining a connection from the pool and releasing it after execution
+   //orawrap's execute method will handle obtaining a connection from the connection pool and releasing 
+   //it after execution
    orawrap.execute(
        'SELECT employee_id, ' +
        '   first_name, ' +
