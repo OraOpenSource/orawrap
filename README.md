@@ -71,10 +71,10 @@ orawrap.createPool(dbConfig, function(err, pool) {
 ```javascript
 var orawrap = require('orawrap');
 
-//When orawrap is required in here, the pool is already available for use
+//When requests are routed to "get", the pool is already available for use
 function get(req, res, next) {
-   //orawrap's execute method will handle obtaining a connection from the connection pool and releasing 
-   //it after execution
+   //orawrap's execute method will handle obtaining a connection from the connection pool 
+   //and releasing it after execution
    orawrap.execute(
        'SELECT employee_id, ' +
        '   first_name, ' +
