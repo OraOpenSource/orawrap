@@ -56,8 +56,8 @@ app.get('/api/employees', employeesRoutes.get);
 
 //Use orawrap to create a connection pool prior to starting the web server 
 orawrap.createPool(dbConfig, function(err, pool) {
-   //the created pool is provided in the callback function, but it's rarely needed 
-   //as it's stored within orawrap for use later
+   //The pool that was created is provided in the callback function, 
+   //but it's rarely needed as it's stored within orawrap for use later
    if (err) throw err;
    
    //Start the web server now that the pool is ready to handle incoming requests
@@ -73,8 +73,8 @@ var orawrap = require('orawrap');
 
 //When requests are routed to "get", the pool is already available for use
 function get(req, res, next) {
-   //orawrap's execute method will handle obtaining a connection from the connection pool 
-   //and releasing it after execution
+   //Orawrap's execute method will handle obtaining a connection from the connection pool 
+   //and then release it after execution
    orawrap.execute(
        'SELECT employee_id, ' +
        '   first_name, ' +
