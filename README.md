@@ -15,7 +15,7 @@ var dbConfig = {
     connectString: 'localhost/xe'
 };
 
-orawrap.setConnectInfo(config);
+orawrap.setConnectInfo(dbConfig);
 
 orawrap.execute(
    'SELECT employee_id, ' +
@@ -56,7 +56,8 @@ app.get('/api/employees', employeesRoutes.get);
 
 //Use orawrap to create a connection pool prior to starting the web server 
 orawrap.createPool(dbConfig, function(err, pool) {
-   //the created pool is provided, but it's rarely needed as it's stored in orawrap for use later
+   //the created pool is provided in the callback function, but it's rarely needed 
+   //as it's stored within orawrap for use later
    if (err) throw err;
    
    //Start the web server now that the pool is ready to handle incoming requests
