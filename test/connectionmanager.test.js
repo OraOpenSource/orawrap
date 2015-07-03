@@ -1,262 +1,214 @@
 var PoolManager = require(__dirname + '/../lib/poolmanager.js');
-var poolmanager;
+var poolManager;
+var ConnectionManager = require(__dirname + '/../lib/connectionmanager.js');
+var connectionManager;
 var OrawrapError = require(__dirname + '/../lib/orawraperror.js');
 var testUtil = require(__dirname + '/testutil.js');
 var assert = require('chai').assert;
 var config = {};
 var configEnv = testUtil.getConfigFromEnv();
 
-describe('poolmanager module:', function() {
+describe('connectionmanager module:', function() {
     beforeEach(function(){
-        poolmanager = new PoolManager();
+        poolManager = new PoolManager();
+        connectionManager = new ConnectionManager(poolManager);
         config = testUtil.extend({}, configEnv);
     });
 
-    describe('create pool', function() {
-        it('passes errors through the promise', function(done) {
-            //not passsing a config obj will cause an error in oracledb
-            poolmanager.createPool()
-                .then(function(pool) {
-                    done(new Error('created pool'));
-                })
-                .catch(function(err) {
-                    assert.instanceOf(err, Error);
+    describe('set/get connect info', function() {
+        it('sets and gets the connect info', function(done) {
+            var connectInfoIn;
+            var connectInfoOut;
 
-                    done();
-                });
+            connectInfoIn = {
+                user: 'someuser',
+                password: 'somepassword',
+                connectString: 'somehost/xe',
+                externalAuth: false
+            };
+
+            connectionManager.setConnectInfo(connectInfoIn);
+
+            connectInfoOut = connectionManager.getConnectInfo();
+
+            assert.deepEqual(connectInfoIn, connectInfoOut);
+
+            done();
         });
+    });
 
-        it('passes error through the callback', function(done) {
-            //not passsing a config obj will cause an error in oracledb
-            poolmanager.createPool(undefined, function(err, pool) {
+    describe('get connection', function() {
+        it('throws an error if setConnectInfo or createPool is not called first', function(done) {
+            connectionManager.getConnection(function(err, connection) {
                 if (err) {
-                    assert.instanceOf(err, Error);
+                    assert.instanceOf(err, OrawrapError);
+                    assert.equal(err.message, connectionManager.CONN_INFO_POOL_NOT_INIT);
                     done();
                     return;
                 }
 
-                done(new Error('created pool'));
+                done(new Error('Got a connection'));
             });
         });
 
-        it('returns a promise which provides the pool', function(done) {
-            poolmanager.createPool(config)
-                .then(function(pool) {
-                    assert.equal(pool.connectionsInUse, 0);
+        it('gets a connection from the base class and returns via callback', function(done) {
+            connectionManager.setConnectInfo(config);
 
-                    done();
-                })
-                .catch(function(err) {
-                    done(err);
-                });
-        });
-
-        it('executes a callback when supplied which provides the pool', function(done) {
-            poolmanager.createPool(config, function(err, pool) {
+            connectionManager.getConnection(function(err, connection) {
                 if (err) {
-                    return done(err);
+                    done(err);
+                    return;
                 }
 
-                assert.equal(pool.connectionsInUse, 0);
+                assert.isFunction(connection.execute);
 
                 done();
             });
         });
 
-        it('creates a pool with the default name when poolName not supplied', function(done) {
-            poolmanager.createPool(config)
-                .then(function(pool) {
+        it('gets a connection from the base class and returns via promise', function(done) {
+            connectionManager.setConnectInfo(config);
+
+            connectionManager.getConnection()
+                .then(function(connection) {
+                    assert.isFunction(connection.execute);
+
+                    done();
+                })
+                .catch(function(err) {
+                    done(err);
+                });
+        });
+
+        it('gets a connection from a pool name', function(done) {
+            poolManager.createPool(config, function(err, pool) {
+                if (err) {
+                    done(err);
+                    return;
+                }
+
+                connectionManager.getConnection(pool.poolName, function(err, connection) {
+                    if (err) {
+                        done(err);
+                        return;
+                    }
+
+                    assert.isFunction(connection.execute);
+
+                    done();
+                });
+            });
+        });
+
+        it('gets a connection from a pool object', function(done) {
+            poolManager.createPool(config, function(err, pool) {
+                if (err) {
+                    done(err);
+                    return;
+                }
+
+                assert.equal(pool.connectionsInUse, 0);
+
+                connectionManager.getConnection(pool, function(err, connection) {
+                    if (err) {
+                        done(err);
+                        return;
+                    }
+
+                    assert.isFunction(connection.execute);
+                    assert.equal(pool.connectionsInUse, 1);
+
+                    done();
+                });
+            });
+        });
+
+        it('gets a connection from default pool over base class if possible', function(done) {
+            connectionManager.setConnectInfo(config); //make this available, though it shouldn't be used
+
+            poolManager.createPool(config, function(err, pool) {
+                if (err) {
+                    done(err);
+                    return;
+                }
+
+                assert.equal(pool.connectionsInUse, 0);
+
+                connectionManager.getConnection(function(err, connection) {
+                    if (err) {
+                        done(err);
+                        return;
+                    }
+
+                    assert.isFunction(connection.execute);
+                    assert.equal(pool.connectionsInUse, 1);
+
+                    done();
+                });
+            });
+        });
+
+        it('gets a connection from the correct pool object', function(done) {
+            config.poolName = 'pool1';
+
+            poolManager.createPool(config, function(err, pool) {
+                if (err) {
+                    done(err);
+                    return;
+                }
+
+                config.poolName = 'pool2';
+
+                poolManager.createPool(config, function(err, pool) {
+                    if (err) {
+                        done(err);
+                        return;
+                    }
+
                     assert.equal(pool.connectionsInUse, 0);
-                    assert.equal(pool.poolName, poolmanager._defaultPoolKey);
 
-                    done();
-                })
-                .catch(function(err) {
-                    done(err);
+                    connectionManager.getConnection('pool2', function(err, connection) {
+                        if (err) {
+                            done(err);
+                            return;
+                        }
+
+                        assert.isFunction(connection.execute);
+                        assert.equal(pool.connectionsInUse, 1);
+
+                        done();
+                    });
                 });
-        });
-
-        it('can create multiple connection pools', function(done) {
-            var pool1;
-            var pool2;
-
-            config.poolName = 'pool1';
-
-            poolmanager.createPool(config)
-                .then(function(p1) {
-                    pool1 = p1;
-
-                    config.poolName = 'pool2';
-
-                    return poolmanager.createPool(config);
-                })
-                .then(function(p2) {
-                    pool2 = p2;
-
-                    assert.equal(pool1.connectionsInUse, 0);
-                    assert.equal(pool2.connectionsInUse, 0);
-
-                    done();
-                })
-                .catch(function(err) {
-                    done(err);
-                });
-        });
-
-        it('ensures pool names are unique', function(done) {
-            config.poolName = 'pool1';
-
-            poolmanager.createPool(config)
-                .then(function() {
-                    return poolmanager.createPool(config);
-                })
-                .then(function() {
-                    done(new Error('Pool names were not unique'));
-                })
-                .catch(function(err) {
-                    assert.instanceOf(err, OrawrapError);
-                    assert.equal(err.message, poolmanager.DUP_POOL_NAME);
-
-                    done();
-                });
-        });
-
-        it('ensures default pool name not used explicitly', function(done) {
-            config.poolName = poolmanager._defaultPoolKey;
-
-            poolmanager.createPool(config)
-                .then(function() {
-                    done(new Error('Pool names were not unique'));
-                })
-                .catch(function(err) {
-                    assert.instanceOf(err, OrawrapError);
-                    assert.equal(err.message, poolmanager.DEFAULT_POOL_NAME_USED);
-
-                    done();
-                });
-        });
-
-        it('ensures pool names are used 1', function(done) {
-            poolmanager.createPool(config)
-                .then(function() {
-                    config.poolName = 'pool2';
-
-                    return poolmanager.createPool(config);
-                })
-                .then(function() {
-                    done(new Error('The first pool did not have a name'));
-                })
-                .catch(function(err) {
-                    assert.instanceOf(err, OrawrapError);
-                    assert.equal(err.message, poolmanager.FIRST_POOL_NOT_NAMED);
-
-                    done();
-                });
-        });
-
-        it('ensures pool names are used 2', function(done) {
-            config.poolName = 'pool1';
-
-            poolmanager.createPool(config)
-                .then(function() {
-                    delete config.poolName;
-
-                    return poolmanager.createPool(config);
-                })
-                .then(function() {
-                    done(new Error('The second pool did not have a name'));
-                })
-                .catch(function(err) {
-                    assert.instanceOf(err, OrawrapError);
-                    assert.equal(err.message, poolmanager.POOL_NOT_NAMED);
-
-                    done();
-                });
+            });
         });
     });
 
-    describe('terminate pool', function() {
-        it('works when passed the default pool', function(done) {
-            poolmanager.createPool(config, function(err, pool) {
+    describe('execute', function() {
+        it('throws an error if setConnectInfo or createPool is not called first', function(done) {
+            connectionManager.getConnection(function(err, connection) {
                 if (err) {
-                    return done(err);
+                    assert.instanceOf(err, OrawrapError);
+                    assert.equal(err.message, connectionManager.CONN_INFO_POOL_NOT_INIT);
+                    done();
+                    return;
                 }
 
-                poolmanager.terminatePool(pool, function(err) {
-                    if (err) {
-                        return done(err);
-                    }
-
-                    done();
-                });
+                done(new Error('Got a connection'));
             });
         });
 
-        it('works when passed a non-default pool', function(done) {
-            config.poolName = 'not the default';
+        it('gets a connection from the base class and returns results via callback', function(done) {
+            connectionManager.setConnectInfo(config);
 
-            poolmanager.createPool(config, function(err, pool) {
+            connectionManager.execute('select 1 from dual', function(err, results) {
                 if (err) {
-                    return done(err);
+                    done(err);
+                    return;
                 }
 
-                poolmanager.terminatePool(pool, function(err) {
-                    if (err) {
-                        return done(err);
-                    }
+                assert.equal(results.rows[0], 1);
 
-                    done();
-                });
-            });
-        });
-
-        it('terminates the default pool when not passed a pool or pool name', function(done) {
-            poolmanager.createPool(config, function(err, pool) {
-                if (err) {
-                    return done(err);
-                }
-
-                assert.isTrue(poolmanager.defaultPoolExists());
-
-                poolmanager.terminatePool(function(err) {
-                    if (err) {
-                        return done(err);
-                    }
-
-                    assert.isFalse(poolmanager.defaultPoolExists());
-
-                    done();
-                });
-            });
-        });
-
-        it('returns correct error if pool does not exist', function(done) {
-            var badPoolName = 'some pool that does not exist';
-
-            poolmanager.createPool(config, function(err, pool) {
-                if (err) {
-                    return done(err);
-                }
-
-                pool.poolName = badPoolName;
-
-                poolmanager.terminatePool(pool, function(err) {
-                    if (err) {
-                        var correctError;
-
-                        assert.instanceOf(err, OrawrapError);
-
-                        correctError = new OrawrapError(poolmanager.POOL_DOES_NOT_EXIST, {
-                            'POOL_NAME': badPoolName
-                        });
-
-                        assert.equal(correctError.message, err.message);
-
-                        return done();
-                    }
-
-                    done(new Error('Did not get the correct error'));
-                });
+                done();
             });
         });
     });
