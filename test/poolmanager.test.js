@@ -27,7 +27,7 @@ describe('poolmanager module:', function() {
         });
 
         it('passes error through the callback', function(done) {
-            //not passsing a config obj will cause an error in oracledb
+            //not passing a config obj will cause an error in oracledb
             poolmanager.createPool(undefined, function(err, pool) {
                 if (err) {
                     assert.instanceOf(err, Error);

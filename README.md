@@ -2,7 +2,7 @@
 
 Orawrap is a wrapper module for the Oracle Database driver for Node.js ([node-oracledb](https://github.com/oracle/node-oracledb)). Some of the features include:
 
-* A pool manager that provides pool storage and retrieval methods
+* A pool manager that provides pool storage and retrieval methods as well as connection request queuing
 * A connection manager that provides a simplified execute method (can open and close connections automatically)
 * Support for centralizing SQL scripts to be executed at various timings
 

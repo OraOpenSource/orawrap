@@ -1,6 +1,6 @@
 {
   "name": "orawrap",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A wrapper module for the Oracle Database driver for Node.js (node-oracledb).",
   "main": "index.js",
   "scripts": {
@@ -22,7 +22,8 @@
   "homepage": "https://github.com/OraOpenSource/orawrap",
   "dependencies": {
     "async": "^1.2.1",
-    "es6-promise": "^2.3.0"
+    "es6-promise": "^2.3.0",
+    "oracledb": "^1.2.0"
   },
   "devDependencies": {
     "chai": "^3.0.0",
