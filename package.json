@@ -1,6 +1,6 @@
 {
   "name": "orawrap",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "A wrapper module for the Oracle Database driver for Node.js (node-oracledb).",
   "main": "index.js",
   "scripts": {
