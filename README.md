@@ -1,5 +1,9 @@
 # orawrap
 
+## PROJECT NOT MAINTAINED
+This project is no longer maintained. I've been working to bring the best parts of Orawrap (and more) to the core driver. Please use the core driver over this module.
+
+
 Orawrap is a wrapper module for the Oracle Database driver for Node.js ([node-oracledb](https://github.com/oracle/node-oracledb)). Some of the features include:
 
 * A pool manager that provides pool storage and retrieval methods as well as connection request queuing
